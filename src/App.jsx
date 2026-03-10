@@ -1121,40 +1121,31 @@ const EventosTab = ({ eventos, setEventos }) => {
 
 // ── Usuários Tab ──────────────────────────────────────────────────────────────
 const UsuariosTab = ({ usuarios, setUsuarios }) => {
-  const [loading, setLoading] = useState(false);
-
-  const toggleAtivo = async (u) => {
-    const { error } = await supabase.from("usuarios").update({ ativo: !u.ativo }).eq("nome", u.nome);
-    if (!error) setUsuarios(prev => prev.map(x => x.nome === u.nome ? { ...x, ativo: !x.ativo } : x));
-  };
-
-  const resetSenha = async (u) => {
-    if (!confirm(`Redefinir a senha de ${u.nome} para "moni"?`)) return;
-    await supabase.from("usuarios").update({ senha: SENHA_PADRAO }).eq("nome", u.nome);
-    alert(`Senha de ${u.nome} redefinida para "moni".`);
+  const resetSenha = async (nome) => {
+    if (!confirm(`Redefinir a senha de ${nome} para "moni"?`)) return;
+    const { error } = await supabase.from("usuarios").update({ senha: SENHA_PADRAO }).eq("nome", nome);
+    if (!error) alert(`Senha de ${nome} redefinida para "moni".`);
+    else alert("Erro: " + error.message);
   };
 
   return (
     <div style={{ maxWidth:600, margin:"0 auto", padding:"20px 16px 40px" }}>
-      <p style={{ fontSize:13, color:"#6b7280", marginBottom:16 }}>{usuarios.length} usuário{usuarios.length!==1?"s":""} cadastrado{usuarios.length!==1?"s":""}.</p>
+      <p style={{ fontSize:13, color:"#6b7280", marginBottom:16 }}>{USUARIOS.length} usuários</p>
       {USUARIOS.map(nome => {
         const u = usuarios.find(x => x.nome === nome);
-        const ativo = u ? u.ativo !== false : false;
         return (
           <div key={nome} style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:14, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"center", gap:12, boxShadow:"0 1px 4px rgba(0,0,0,.04)" }}>
             <div style={{ width:36, height:36, borderRadius:"50%", background: u?.foto ? "transparent" : BRAND.gradient, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
-              {u?.foto ? <img src={u.foto} style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : <span style={{ fontSize:14, color:"#fff", fontWeight:700 }}>{nome[0]}</span>}
+              {u?.foto ? <img src={u.foto} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : <span style={{ fontSize:14, color:"#fff", fontWeight:700 }}>{nome[0]}</span>}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
               <p style={{ margin:0, fontWeight:600, fontSize:14, color:"#111827" }}>{nome}</p>
-              <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>{u?.cargo || "Sem cargo"} · {ativo ? <span style={{ color:"#16a34a" }}>Ativo</span> : <span style={{ color:"#dc2626" }}>Inativo</span>}</p>
+              <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>{u?.cargo || "Sem cargo definido"}</p>
             </div>
-            <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-              <button onClick={() => toggleAtivo(u || { nome, ativo:false })} style={{ background: ativo ? "#fef2f2" : "#f0fdf4", border:"none", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:11, fontWeight:600, color: ativo ? "#dc2626" : "#16a34a", fontFamily:"inherit" }}>
-                {ativo ? "Desativar" : "Ativar"}
-              </button>
-              {ativo && <button onClick={() => resetSenha(u || { nome })} style={{ background:"rgba(26,47,214,.08)", border:"none", borderRadius:8, padding:"6px 10px", cursor:"pointer", fontSize:11, fontWeight:600, color:BRAND.primary, fontFamily:"inherit" }}>Reset senha</button>}
-            </div>
+            <button onClick={() => resetSenha(nome)}
+              style={{ background:"rgba(26,47,214,.08)", border:"none", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontSize:11, fontWeight:600, color:BRAND.primary, fontFamily:"inherit", flexShrink:0 }}>
+              Reset senha
+            </button>
           </div>
         );
       })}
