@@ -49,6 +49,87 @@ const exportCSV = (rows, filename, headers, mapper) => {
   URL.revokeObjectURL(url);
 };
 
+const exportXLSX = (rows, filename, headers, mapper) => {
+  // Simple XLSX via CSV with BOM for Excel compatibility
+  const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [headers.map(escape).join("\t"), ...rows.map(r => mapper(r).map(escape).join("\t"))];
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + lines.join("\n")], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename.replace(".csv",".xls"); a.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportPDF = (rows, title, headers, mapper) => {
+  const colW = Math.floor(750 / headers.length);
+  const rowH = 22;
+  const headerH = 40;
+  const titleH = 50;
+  const pageW = 800;
+  const totalH = titleH + headerH + rows.length * rowH + 40;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pageW}" height="${totalH}">
+    <rect width="${pageW}" height="${totalH}" fill="#fafafa"/>
+    <rect x="0" y="0" width="${pageW}" height="${titleH}" fill="#1A2FD6"/>
+    <text x="20" y="32" font-family="Arial" font-size="18" font-weight="bold" fill="white">${title}</text>
+    <text x="${pageW-20}" y="32" font-family="Arial" font-size="11" fill="rgba(255,255,255,0.7)" text-anchor="end">${rows.length} registros · ${new Date().toLocaleDateString("pt-BR")}</text>
+    <rect x="0" y="${titleH}" width="${pageW}" height="${headerH}" fill="#06038D"/>
+    ${headers.map((h,i) => `<text x="${20+i*colW}" y="${titleH+26}" font-family="Arial" font-size="11" font-weight="bold" fill="white">${h}</text>`).join("")}
+    ${rows.map((r,ri) => {
+      const data = mapper(r);
+      const y = titleH + headerH + ri * rowH;
+      const bg = ri % 2 === 0 ? "#ffffff" : "#f3f4f6";
+      return `<rect x="0" y="${y}" width="${pageW}" height="${rowH}" fill="${bg}"/>
+        ${data.map((v,ci) => `<text x="${20+ci*colW}" y="${y+15}" font-family="Arial" font-size="10" fill="#374151">${String(v??'').slice(0,30)}</text>`).join("")}`;
+    }).join("")}
+  </svg>`;
+
+  const blob = new Blob([svg], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = title.toLowerCase().replace(/ /g,"_") + ".svg"; a.click();
+  URL.revokeObjectURL(url);
+};
+
+const copyVisitante = (v) => {
+  const parts = [
+    `👤 *${v.nome || "—"}*`,
+    v.empresa && `🏢 ${v.empresa}`,
+    v.cargo && `💼 ${v.cargo}`,
+    v.whatsapp && `📱 ${v.whatsapp}`,
+    v.atendente && `🤝 Atendido por: ${v.atendente}`,
+    v.obs && `📝 ${v.obs}`,
+    v.data_hora && `🗓 ${fmtDate(v.data_hora)}`,
+  ].filter(Boolean);
+  navigator.clipboard.writeText(parts.join("\n"));
+};
+
+const copyLead = (l) => {
+  const sw = l.software_atual === "Outros" && l.software_outro ? l.software_outro : l.software_atual;
+  const parts = [
+    `⭐ *LEAD — ${l.nome || "—"}*`,
+    l.temperatura && `🌡 Temperatura: ${l.temperatura}`,
+    ``,
+    l.empresa && `🏢 ${l.empresa}`,
+    l.cargo && `💼 ${l.cargo}`,
+    l.cidade_estado && `📍 ${l.cidade_estado}`,
+    l.whatsapp && `📱 ${l.whatsapp}`,
+    l.email && `📧 ${l.email}`,
+    ``,
+    (l.qtd_contas || l.qtd_portarias || sw) && `*Qualificação:*`,
+    sw && `💻 Software atual: ${sw}`,
+    l.qtd_contas && `👥 Qtd contas: ${l.qtd_contas}`,
+    l.qtd_portarias && `🏠 Qtd portarias: ${l.qtd_portarias}`,
+    l.segmento?.length > 0 && ``,
+    l.segmento?.length > 0 && `*Segmento:* ${l.segmento.join(", ")}`,
+    l.interesse?.length > 0 && `*Interesse:* ${l.interesse.join(", ")}`,
+    l.atendente && ``,
+    l.atendente && `🤝 Atendido por: ${l.atendente}`,
+    l.obs && `📝 ${l.obs}`,
+    l.data_hora && `🗓 ${fmtDate(l.data_hora)}`,
+  ].filter(v => v !== false && v !== undefined);
+  navigator.clipboard.writeText(parts.join("\n"));
+};
+
 // ── Field styles ──────────────────────────────────────────────────────────────
 const fieldStyle = {
   width: "100%", height: 48, padding: "0 14px",
@@ -83,6 +164,57 @@ const Toast = ({ msg, onDone }) => {
 const Logo = ({ size = 80 }) => (
   <img src={`data:image/png;base64,${LOGO_B64}`} alt="Moni" style={{ width: size, height: "auto", objectFit: "contain" }} />
 );
+
+// ── ExportMenu ────────────────────────────────────────────────────────────────
+const ExportMenu = ({ onCSV, onXLSX, onPDF }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return (
+    <div ref={ref} style={{ position:"relative" }}>
+      <button onClick={() => setOpen(p => !p)}
+        style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px", borderRadius:8, border:"1px solid #e5e7eb", background: open ? BRAND.primary : "#f9fafb", cursor:"pointer", fontSize:12, fontWeight:500, color: open ? "#fff" : "#374151", fontFamily:"inherit", transition:"all .15s" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar ▾
+      </button>
+      {open && (
+        <div style={{ position:"absolute", right:0, top:"calc(100% + 6px)", background:"#fff", border:"1px solid #e5e7eb", borderRadius:12, boxShadow:"0 8px 24px rgba(0,0,0,.12)", zIndex:100, minWidth:140, overflow:"hidden" }}>
+          {[
+            { label:"📊 XLSX (Excel)", action: () => { onXLSX(); setOpen(false); } },
+            { label:"📄 CSV", action: () => { onCSV(); setOpen(false); } },
+            { label:"🖨 PDF / SVG", action: () => { onPDF(); setOpen(false); } },
+          ].map(opt => (
+            <button key={opt.label} onClick={opt.action}
+              style={{ display:"block", width:"100%", padding:"11px 16px", background:"none", border:"none", textAlign:"left", fontSize:13, color:"#374151", cursor:"pointer", fontFamily:"inherit", transition:"background .1s" }}
+              onMouseEnter={e => e.currentTarget.style.background="#f3f4f6"}
+              onMouseLeave={e => e.currentTarget.style.background="none"}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── CopyBtn ───────────────────────────────────────────────────────────────────
+const CopyBtn = ({ onCopy }) => {
+  const [copied, setCopied] = useState(false);
+  const handle = () => { onCopy(); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return (
+    <button onClick={handle}
+      style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", borderRadius:8, border:`1px solid ${copied ? "#22c55e" : "#e5e7eb"}`, background: copied ? "#f0fdf4" : "#f9fafb", cursor:"pointer", fontSize:11, fontWeight:600, color: copied ? "#16a34a" : "#6b7280", fontFamily:"inherit", transition:"all .2s", flexShrink:0 }}>
+      {copied
+        ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copiado!</>
+        : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copiar</>
+      }
+    </button>
+  );
+};
 
 // ── BackBtn ───────────────────────────────────────────────────────────────────
 const BackBtn = ({ onClick, label }) => (
@@ -763,6 +895,9 @@ const VisitantesScreen = ({ onBack, items, usuario }) => {
     return matchSearch && matchAtendente;
   });
 
+  const hdrs = ["Nome","Empresa","Cargo","WhatsApp","Atendido por","Observação","Data"];
+  const mapper = v => [v.nome, v.empresa, v.cargo, v.whatsapp, v.atendente, v.obs, v.data_hora || ""];
+
   return (
     <div style={{ minHeight:"100vh", background:BRAND.bg, paddingBottom:40 }}>
       <div style={{ position:"sticky", top:0, zIndex:10, background:"rgba(255,255,255,.9)", backdropFilter:"blur(12px)", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", gap:10 }}>
@@ -770,11 +905,11 @@ const VisitantesScreen = ({ onBack, items, usuario }) => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
         </button>
         <h1 style={{ fontSize:16, fontWeight:600, color:"#111827", margin:0, flex:1 }}>Visitantes</h1>
-        <button onClick={() => exportCSV(filtered, "visitantes.csv", ["Nome","Empresa","Cargo","WhatsApp","Atendido por","Observação","Data"], v => [v.nome, v.empresa, v.cargo, v.whatsapp, v.atendente, v.obs, v.data_hora || ""])}
-          style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px", borderRadius:8, border:"1px solid #e5e7eb", background:"#f9fafb", cursor:"pointer", fontSize:12, fontWeight:500, color:"#374151", fontFamily:"inherit" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exportar
-        </button>
+        <ExportMenu
+          onCSV={() => exportCSV(filtered, "visitantes.csv", hdrs, mapper)}
+          onXLSX={() => exportXLSX(filtered, "visitantes.csv", hdrs, mapper)}
+          onPDF={() => exportPDF(filtered, "Visitantes", hdrs, mapper)}
+        />
       </div>
       <div style={{ maxWidth:560, margin:"0 auto", padding:"20px 16px 0", display:"flex", flexDirection:"column", gap:14 }}>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
@@ -801,7 +936,10 @@ const VisitantesScreen = ({ onBack, items, usuario }) => {
                     {(v.empresa || v.cargo) && <p style={{ margin:"2px 0 0", fontSize:12, color:"#6b7280" }}>{[v.empresa, v.cargo].filter(Boolean).join(" · ")}</p>}
                   </div>
                 </div>
-                {v.data_hora && <span style={{ fontSize:11, color:"#9ca3af", flexShrink:0, background:"#f9fafb", border:"1px solid #f3f4f6", borderRadius:8, padding:"3px 8px", whiteSpace:"nowrap" }}>{fmtDate(v.data_hora)}</span>}
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
+                  {v.data_hora && <span style={{ fontSize:11, color:"#9ca3af", background:"#f9fafb", border:"1px solid #f3f4f6", borderRadius:8, padding:"3px 8px", whiteSpace:"nowrap" }}>{fmtDate(v.data_hora)}</span>}
+                  <CopyBtn onCopy={() => copyVisitante(v)} />
+                </div>
               </div>
               <div style={{ padding:"12px 16px", display:"flex", flexDirection:"column", gap:8 }}>
                 {v.whatsapp && <div style={{ display:"flex", alignItems:"center", gap:8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.13 6.13l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span style={{ fontSize:13, color:"#374151" }}>{v.whatsapp}</span></div>}
@@ -833,6 +971,9 @@ const LeadsScreen = ({ onBack, items, usuario }) => {
     return matchSearch && matchAtendente && matchTemp;
   });
 
+  const hdrs = ["Nome","E-mail","WhatsApp","Empresa","Cargo","Cidade/Estado","Atendido por","Qtd Contas","Qtd Portarias","Software atual","Segmento","Interesse","Temperatura","Data"];
+  const mapper = l => [l.nome, l.email, l.whatsapp, l.empresa, l.cargo, l.cidade_estado, l.atendente, l.qtd_contas, l.qtd_portarias, l.software_atual==="Outros"&&l.software_outro?l.software_outro:l.software_atual, (l.segmento||[]).join("; "), (l.interesse||[]).join("; "), l.temperatura, l.data_hora||""];
+
   return (
     <div style={{ minHeight:"100vh", background:BRAND.bg, paddingBottom:40 }}>
       <div style={{ position:"sticky", top:0, zIndex:10, background:"rgba(255,255,255,.9)", backdropFilter:"blur(12px)", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", gap:10 }}>
@@ -840,11 +981,11 @@ const LeadsScreen = ({ onBack, items, usuario }) => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
         </button>
         <h1 style={{ fontSize:16, fontWeight:600, color:"#111827", margin:0, flex:1 }}>Leads</h1>
-        <button onClick={() => exportCSV(filtered, "leads.csv", ["Nome","E-mail","WhatsApp","Empresa","Cargo","Cidade/Estado","Atendido por","Qtd Contas","Qtd Portarias","Software atual","Segmento","Interesse","Temperatura","Data"], l => [l.nome, l.email, l.whatsapp, l.empresa, l.cargo, l.cidade_estado, l.atendente, l.qtd_contas, l.qtd_portarias, l.software_atual==="Outros"&&l.software_outro?l.software_outro:l.software_atual, (l.segmento||[]).join("; "), (l.interesse||[]).join("; "), l.temperatura, l.data_hora||""])}
-          style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px", borderRadius:8, border:"1px solid #e5e7eb", background:"#f9fafb", cursor:"pointer", fontSize:12, fontWeight:500, color:"#374151", fontFamily:"inherit" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exportar
-        </button>
+        <ExportMenu
+          onCSV={() => exportCSV(filtered, "leads.csv", hdrs, mapper)}
+          onXLSX={() => exportXLSX(filtered, "leads.csv", hdrs, mapper)}
+          onPDF={() => exportPDF(filtered, "Leads", hdrs, mapper)}
+        />
       </div>
       <div style={{ maxWidth:560, margin:"0 auto", padding:"20px 16px 0", display:"flex", flexDirection:"column", gap:14 }}>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
@@ -875,6 +1016,7 @@ const LeadsScreen = ({ onBack, items, usuario }) => {
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
                     {tc && <span style={{ fontSize:11, fontWeight:600, padding:"3px 8px", borderRadius:8, background:tc.bg, color:tc.text, border:`1px solid ${tc.border}` }}>{tc.emoji} {l.temperatura}</span>}
                     {l.data_hora && <span style={{ fontSize:11, color:"#9ca3af", background:"#f9fafb", border:"1px solid #f3f4f6", borderRadius:8, padding:"3px 8px" }}>{fmtDate(l.data_hora)}</span>}
+                    <CopyBtn onCopy={() => copyLead(l)} />
                   </div>
                 </div>
                 <div style={{ padding:"12px 16px", display:"flex", flexDirection:"column", gap:7, borderBottom:"1px solid #f3f4f6" }}>
@@ -892,8 +1034,19 @@ const LeadsScreen = ({ onBack, items, usuario }) => {
                 )}
                 {(l.segmento?.length > 0 || l.interesse?.length > 0) && (
                   <div style={{ padding:"10px 16px", display:"flex", flexDirection:"column", gap:8 }}>
-                    {l.segmento?.length > 0 && <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{l.segmento.map(s => <span key={s} style={{ fontSize:11, fontWeight:500, padding:"3px 9px", borderRadius:20, background:"#f3f4f6", color:"#374151", border:"1px solid #e5e7eb" }}>{s}</span>)}</div>}
-                    {l.interesse?.length > 0 && <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{l.interesse.map(eu => <span key={eu} style={{ fontSize:11, fontWeight:500, padding:"3px 9px", borderRadius:20, background:"rgba(26,47,214,.07)", color:BRAND.primary, border:"1px solid rgba(26,47,214,.15)" }}>{eu}</span>)}</div>}
+                    {l.segmento?.length > 0 && (
+                      <div>
+                        <p style={{ margin:"0 0 5px", fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.06em" }}>Segmento</p>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{l.segmento.map(s => <span key={s} style={{ fontSize:11, fontWeight:500, padding:"3px 9px", borderRadius:20, background:"#f3f4f6", color:"#374151", border:"1px solid #e5e7eb" }}>{s}</span>)}</div>
+                      </div>
+                    )}
+                    {l.segmento?.length > 0 && l.interesse?.length > 0 && <div style={{ height:1, background:"#f3f4f6" }} />}
+                    {l.interesse?.length > 0 && (
+                      <div>
+                        <p style={{ margin:"0 0 5px", fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.06em" }}>Interesse</p>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>{l.interesse.map(eu => <span key={eu} style={{ fontSize:11, fontWeight:500, padding:"3px 9px", borderRadius:20, background:"rgba(26,47,214,.07)", color:BRAND.primary, border:"1px solid rgba(26,47,214,.15)" }}>{eu}</span>)}</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -915,15 +1068,16 @@ const AdminScreen = ({ onBack, onNav, eventos, setEventos, usuarios, setUsuarios
     { id:"dashboard", label:"Dashboard", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
     { id:"eventos", label:"Eventos", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
     { id:"usuarios", label:"Usuários", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+    { id:"backup", label:"Backup", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
   ];
 
   return (
     <div style={{ minHeight:"100vh", background:BRAND.bg }}>
       <BackBtn onClick={onBack} label="Painel Admin" />
       {/* Tab bar */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", display:"flex", padding:"0 16px" }}>
+      <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", display:"flex", padding:"0 16px", overflowX:"auto" }}>
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ display:"flex", alignItems:"center", gap:6, padding:"14px 16px", background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:tab===t.id ? 700 : 400, color:tab===t.id ? BRAND.primary : "#6b7280", borderBottom:`2px solid ${tab===t.id ? BRAND.primary : "transparent"}`, fontFamily:"inherit", transition:"all .15s" }}>
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ display:"flex", alignItems:"center", gap:6, padding:"14px 14px", background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:tab===t.id ? 700 : 400, color:tab===t.id ? BRAND.primary : "#6b7280", borderBottom:`2px solid ${tab===t.id ? BRAND.primary : "transparent"}`, fontFamily:"inherit", transition:"all .15s", whiteSpace:"nowrap" }}>
             {t.icon}{t.label}
           </button>
         ))}
@@ -932,6 +1086,102 @@ const AdminScreen = ({ onBack, onNav, eventos, setEventos, usuarios, setUsuarios
       {tab === "dashboard" && <Dashboard leads={leads} visitors={visitors} eventos={eventos} />}
       {tab === "eventos" && <EventosTab eventos={eventos} setEventos={setEventos} />}
       {tab === "usuarios" && <UsuariosTab usuarios={usuarios} setUsuarios={setUsuarios} />}
+      {tab === "backup" && <BackupTab eventos={eventos} leads={leads} visitors={visitors} />}
+    </div>
+  );
+};
+
+// ── Backup Tab ────────────────────────────────────────────────────────────────
+const BackupTab = ({ eventos, leads, visitors }) => {
+  const [eventoSel, setEventoSel] = useState("todos");
+  const [done, setDone] = useState(null);
+
+  const doBackup = (formato) => {
+    const evento = eventos.find(e => e.id === eventoSel);
+    const nomeEvento = evento ? evento.nome : "Todos os Eventos";
+    const visFiltered = eventoSel === "todos" ? visitors : visitors.filter(v => v.evento_id === eventoSel);
+    const leadsFiltered = eventoSel === "todos" ? leads : leads.filter(l => l.evento_id === eventoSel);
+    const date = new Date().toLocaleDateString("pt-BR").replace(/\//g,"-");
+    const slug = nomeEvento.toLowerCase().replace(/\s+/g,"_");
+
+    if (formato === "json") {
+      const data = { evento: nomeEvento, exportado_em: new Date().toISOString(), visitantes: visFiltered, leads: leadsFiltered };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `backup_${slug}_${date}.json`; a.click();
+    } else if (formato === "csv_vis") {
+      exportCSV(visFiltered, `visitantes_${slug}_${date}.csv`, ["Nome","Empresa","Cargo","WhatsApp","Atendido por","Observação","Data"], v => [v.nome,v.empresa,v.cargo,v.whatsapp,v.atendente,v.obs,v.data_hora||""]);
+    } else if (formato === "csv_leads") {
+      exportCSV(leadsFiltered, `leads_${slug}_${date}.csv`, ["Nome","E-mail","WhatsApp","Empresa","Cargo","Cidade","Atendente","Qtd Contas","Qtd Portarias","Software","Segmento","Interesse","Temperatura","Data"], l => [l.nome,l.email,l.whatsapp,l.empresa,l.cargo,l.cidade_estado,l.atendente,l.qtd_contas,l.qtd_portarias,l.software_atual==="Outros"&&l.software_outro?l.software_outro:l.software_atual,(l.segmento||[]).join("; "),(l.interesse||[]).join("; "),l.temperatura,l.data_hora||""]);
+    } else if (formato === "xlsx_vis") {
+      exportXLSX(visFiltered, `visitantes_${slug}_${date}.csv`, ["Nome","Empresa","Cargo","WhatsApp","Atendido por","Observação","Data"], v => [v.nome,v.empresa,v.cargo,v.whatsapp,v.atendente,v.obs,v.data_hora||""]);
+    } else if (formato === "xlsx_leads") {
+      exportXLSX(leadsFiltered, `leads_${slug}_${date}.csv`, ["Nome","E-mail","WhatsApp","Empresa","Cargo","Cidade","Atendente","Qtd Contas","Qtd Portarias","Software","Segmento","Interesse","Temperatura","Data"], l => [l.nome,l.email,l.whatsapp,l.empresa,l.cargo,l.cidade_estado,l.atendente,l.qtd_contas,l.qtd_portarias,l.software_atual==="Outros"&&l.software_outro?l.software_outro:l.software_atual,(l.segmento||[]).join("; "),(l.interesse||[]).join("; "),l.temperatura,l.data_hora||""]);
+    }
+    setDone(formato);
+    setTimeout(() => setDone(null), 2500);
+  };
+
+  const visCount = eventoSel === "todos" ? visitors.length : visitors.filter(v => v.evento_id === eventoSel).length;
+  const leadsCount = eventoSel === "todos" ? leads.length : leads.filter(l => l.evento_id === eventoSel).length;
+
+  const BtnBackup = ({ id, label, sub, color }) => (
+    <button onClick={() => doBackup(id)}
+      style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", background: done===id ? "#f0fdf4" : "#fff", border:`1px solid ${done===id ? "#22c55e" : "#e5e7eb"}`, borderRadius:14, cursor:"pointer", textAlign:"left", fontFamily:"inherit", transition:"all .2s", width:"100%" }}
+      onMouseEnter={e => { if (done!==id) { e.currentTarget.style.borderColor=BRAND.primary; e.currentTarget.style.background="rgba(26,47,214,.02)"; }}}
+      onMouseLeave={e => { if (done!==id) { e.currentTarget.style.borderColor="#e5e7eb"; e.currentTarget.style.background="#fff"; }}}>
+      <div style={{ width:40, height:40, borderRadius:12, background: done===id ? "#dcfce7" : `${color}12`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        {done===id
+          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        }
+      </div>
+      <div style={{ flex:1 }}>
+        <p style={{ margin:0, fontSize:14, fontWeight:600, color: done===id ? "#16a34a" : "#111827" }}>{done===id ? "Download iniciado!" : label}</p>
+        <p style={{ margin:0, fontSize:12, color:"#9ca3af", marginTop:2 }}>{sub}</p>
+      </div>
+    </button>
+  );
+
+  return (
+    <div style={{ maxWidth:600, margin:"0 auto", padding:"24px 16px 40px" }}>
+      <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", boxShadow:"0 1px 4px rgba(0,0,0,.05)", marginBottom:20 }}>
+        <p style={{ margin:"0 0 12px", fontSize:13, fontWeight:600, color:"#374151" }}>Evento para backup</p>
+        <div style={{ position:"relative" }}>
+          <select value={eventoSel} onChange={e => setEventoSel(e.target.value)}
+            style={{ ...fieldStyle, appearance:"none", paddingRight:36 }}>
+            <option value="todos">Todos os eventos</option>
+            {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nome}</option>)}
+          </select>
+          <span style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"#6b7280" }}>▾</span>
+        </div>
+        <div style={{ display:"flex", gap:16, marginTop:14 }}>
+          <div style={{ flex:1, background:"rgba(26,47,214,.04)", borderRadius:12, padding:"12px 16px", textAlign:"center", border:"1px solid rgba(26,47,214,.1)" }}>
+            <p style={{ margin:0, fontSize:24, fontWeight:800, color:BRAND.primary }}>{visCount}</p>
+            <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>Visitantes</p>
+          </div>
+          <div style={{ flex:1, background:"rgba(26,47,214,.04)", borderRadius:12, padding:"12px 16px", textAlign:"center", border:"1px solid rgba(26,47,214,.1)" }}>
+            <p style={{ margin:0, fontSize:24, fontWeight:800, color:BRAND.primary }}>{leadsCount}</p>
+            <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>Leads</p>
+          </div>
+        </div>
+      </div>
+
+      <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.07em" }}>Backup completo</p>
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:24 }}>
+        <BtnBackup id="json" label="Backup JSON completo" sub="Visitantes + Leads em um único arquivo JSON estruturado" color={BRAND.primary} />
+      </div>
+
+      <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.07em" }}>Visitantes</p>
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:24 }}>
+        <BtnBackup id="xlsx_vis" label="Visitantes — Excel (XLSX)" sub={`${visCount} registros em formato Excel`} color="#16a34a" />
+        <BtnBackup id="csv_vis" label="Visitantes — CSV" sub={`${visCount} registros em formato CSV`} color="#0ea5e9" />
+      </div>
+
+      <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.07em" }}>Leads</p>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <BtnBackup id="xlsx_leads" label="Leads — Excel (XLSX)" sub={`${leadsCount} registros em formato Excel`} color="#7c3aed" />
+        <BtnBackup id="csv_leads" label="Leads — CSV" sub={`${leadsCount} registros em formato CSV`} color="#f59e0b" />
+      </div>
     </div>
   );
 };
