@@ -338,7 +338,7 @@ const PerfilScreen = ({ onBack, usuario, onUpdate }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // SCREEN: HOME
 // ══════════════════════════════════════════════════════════════════════════════
-const HomeScreen = ({ onNav, visitors, leads, usuario, eventos, eventoSelecionado, setEventoSelecionado }) => {
+const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, eventoSelecionado, setEventoSelecionado }) => {
   const visCount = visitors.filter(v => !eventoSelecionado || v.evento_id === eventoSelecionado).length;
   const leadCount = leads.filter(l => !eventoSelecionado || l.evento_id === eventoSelecionado).length;
   const eventoAtual = eventos.find(e => e.id === eventoSelecionado);
@@ -346,28 +346,47 @@ const HomeScreen = ({ onNav, visitors, leads, usuario, eventos, eventoSelecionad
   return (
     <div style={{ minHeight:"100vh", background:BRAND.bg, fontFamily:"'Instrument Sans', sans-serif" }}>
       {/* Header */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <Logo size={56} />
+      <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+        {/* Esquerda: Logo + Admin */}
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <Logo size={48} />
+          {usuario.isAdmin && (
+            <>
+              <div style={{ width:1, height:28, background:"#e5e7eb" }} />
+              <button onClick={() => onNav("admin")} title="Painel Admin"
+                style={{ background:"rgba(26,47,214,.08)", border:"1px solid rgba(26,47,214,.15)", borderRadius:10, padding:"6px 12px", display:"flex", alignItems:"center", gap:6, cursor:"pointer", color:BRAND.primary, fontSize:12, fontWeight:700, fontFamily:"inherit" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Admin
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Direita: Avatar + Nome + Logout */}
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <button onClick={() => onNav("perfil")} style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ width:36, height:36, borderRadius:"50%", background: usuario.foto ? "transparent" : BRAND.gradient, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", border:`2px solid ${BRAND.primary}` }}>
+            <div style={{ width:36, height:36, borderRadius:"50%", background: usuario.foto ? "transparent" : BRAND.gradient, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", border:`2px solid ${BRAND.primary}`, flexShrink:0 }}>
               {usuario.foto
                 ? <img src={usuario.foto} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <span style={{ fontSize:14, color:"#fff", fontWeight:700 }}>{usuario.nome?.[0]?.toUpperCase()}</span>
               }
             </div>
             <div style={{ textAlign:"left" }}>
-              <p style={{ margin:0, fontSize:13, fontWeight:600, color:"#111827" }}>{usuario.nome}</p>
-              <p style={{ margin:0, fontSize:11, color:"#6b7280" }}>{usuario.cargo || (usuario.isAdmin ? "Admin" : "Equipe")}</p>
+              <p style={{ margin:0, fontSize:13, fontWeight:600, color:"#111827", lineHeight:1.2 }}>{usuario.nome}</p>
+              <p style={{ margin:0, fontSize:11, color:"#6b7280" }}>{usuario.cargo || (usuario.isAdmin ? "Administrador" : "Equipe")}</p>
             </div>
           </button>
-          {usuario.isAdmin && (
-            <button onClick={() => onNav("admin")} style={{ background:"rgba(26,47,214,.08)", border:"none", borderRadius:10, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </button>
-          )}
+          <div style={{ width:1, height:28, background:"#e5e7eb" }} />
+          <button onClick={() => onLogout()} title="Sair"
+            style={{ background:"none", border:"none", borderRadius:10, width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#9ca3af" }}
+            onMouseEnter={e => e.currentTarget.style.color="#dc2626"}
+            onMouseLeave={e => e.currentTarget.style.color="#9ca3af"}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -910,144 +929,190 @@ const Dashboard = ({ leads, visitors, eventos }) => {
   const filteredLeads = eventoFiltro === "todos" ? leads : leads.filter(l => l.evento_id === eventoFiltro);
   const filteredVis = eventoFiltro === "todos" ? visitors : visitors.filter(v => v.evento_id === eventoFiltro);
 
-  // Temperatura
   const tempCount = { Quente: 0, Morno: 0, Frio: 0 };
   filteredLeads.forEach(l => { if (TEMP_CONFIG[l.temperatura]) tempCount[l.temperatura]++; });
 
-  // Segmentos
   const segCount = {};
   filteredLeads.forEach(l => (l.segmento||[]).forEach(s => { segCount[s] = (segCount[s]||0) + 1; }));
-  const topSegmentos = Object.entries(segCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const topSegmentos = Object.entries(segCount).sort((a,b) => b[1]-a[1]).slice(0,6);
 
-  // Software por tipo
   const swAlarme = {}, swPortaria = {}, swAmbos = {};
   filteredLeads.forEach(l => {
-    if (!l.software_atual || l.software_atual === "Outros" && !l.software_outro) return;
-    const sw = l.software_atual === "Outros" ? l.software_outro : l.software_atual;
+    if (!l.software_atual) return;
+    const sw = l.software_atual === "Outros" ? (l.software_outro || "Outros") : l.software_atual;
     const temAlarme = (l.segmento||[]).includes("Monitoramento de alarmes");
     const temPortaria = (l.segmento||[]).includes("Portaria remota");
     if (temAlarme && temPortaria) { swAmbos[sw] = (swAmbos[sw]||0)+1; }
     else if (temAlarme) { swAlarme[sw] = (swAlarme[sw]||0)+1; }
     else if (temPortaria) { swPortaria[sw] = (swPortaria[sw]||0)+1; }
   });
-  const topAlarme = Object.entries(swAlarme).sort((a,b) => b[1]-a[1]).slice(0,3);
-  const topPortaria = Object.entries(swPortaria).sort((a,b) => b[1]-a[1]).slice(0,3);
-  const topAmbos = Object.entries(swAmbos).sort((a,b) => b[1]-a[1]).slice(0,3);
+  const topAlarme = Object.entries(swAlarme).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const topPortaria = Object.entries(swPortaria).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const topAmbos = Object.entries(swAmbos).sort((a,b) => b[1]-a[1]).slice(0,5);
 
-  // Leads por vendedor
   const vendedorCount = {};
   filteredLeads.forEach(l => { if (l.atendente) vendedorCount[l.atendente] = (vendedorCount[l.atendente]||0)+1; });
   const topVendedores = Object.entries(vendedorCount).sort((a,b) => b[1]-a[1]);
-
   const maxVend = topVendedores[0]?.[1] || 1;
+  const totalLeads = filteredLeads.length;
+  const convRate = (filteredVis.length + totalLeads) > 0 ? Math.round((totalLeads / (filteredVis.length + totalLeads)) * 100) : 0;
 
-  const StatCard = ({ label, value, color, icon, sub }) => (
-    <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", boxShadow:"0 1px 4px rgba(0,0,0,.05)", display:"flex", flexDirection:"column", gap:4 }}>
+  const KpiCard = ({ label, value, sub, color, icon }) => (
+    <div style={{ background:"rgba(255,255,255,.05)", borderRadius:18, padding:"18px 20px", border:"1px solid rgba(255,255,255,.08)", display:"flex", flexDirection:"column", gap:6, position:"relative", overflow:"hidden", backdropFilter:"blur(10px)" }}>
+      <div style={{ position:"absolute", top:-20, right:-20, width:90, height:90, borderRadius:"50%", background:`${color || BRAND.primary}18` }} />
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <span style={{ fontSize:13, color:"#6b7280", fontWeight:500 }}>{label}</span>
-        <div style={{ background:`${color}15`, borderRadius:8, padding:6 }}>{icon}</div>
+        <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>
+        <div style={{ background:`${color || BRAND.primary}22`, borderRadius:10, padding:7 }}>{icon}</div>
       </div>
-      <p style={{ margin:0, fontSize:32, fontWeight:800, color:color || "#111827" }}>{value}</p>
-      {sub && <p style={{ margin:0, fontSize:12, color:"#9ca3af" }}>{sub}</p>}
+      <p style={{ margin:0, fontSize:36, fontWeight:900, color: color || "#60a5fa", lineHeight:1 }}>{value}</p>
+      {sub && <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,.4)" }}>{sub}</p>}
     </div>
   );
 
-  const BarChart = ({ data, color, emptyMsg }) => {
-    const max = data[0]?.[1] || 1;
-    return data.length === 0
-      ? <p style={{ color:"#9ca3af", fontSize:13, margin:"8px 0 0" }}>{emptyMsg}</p>
-      : data.map(([name, count]) => (
-        <div key={name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-          <span style={{ fontSize:12, color:"#374151", minWidth:80, flexShrink:0 }}>{name}</span>
-          <div style={{ flex:1, background:"#f3f4f6", borderRadius:8, height:20, overflow:"hidden" }}>
-            <div style={{ width:`${(count/max)*100}%`, height:"100%", background:color, borderRadius:8, transition:"width .5s", minWidth:4 }} />
+  const HBar = ({ name, count, max, color, rank }) => {
+    const pct = max > 0 ? (count/max)*100 : 0;
+    const medalColors = ["#f59e0b","#94a3b8","#cd7c3a"];
+    return (
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:9 }}>
+        {rank !== undefined && (
+          <div style={{ width:22, height:22, borderRadius:"50%", background: rank < 3 ? medalColors[rank] : "rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, flexShrink:0 }}>
+            <span style={{ fontSize:10, fontWeight:800, color: rank < 3 ? "#fff" : "rgba(255,255,255,.4)" }}>{rank+1}</span>
           </div>
-          <span style={{ fontSize:12, fontWeight:700, color:"#374151", minWidth:20, textAlign:"right" }}>{count}</span>
+        )}
+        <span style={{ fontSize:12, color:"rgba(255,255,255,.75)", fontWeight:500, width:90, flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{name}</span>
+        <div style={{ flex:1, background:"rgba(255,255,255,.07)", borderRadius:100, height:14, overflow:"hidden" }}>
+          <div style={{ width:`${pct}%`, height:"100%", background: color || "rgba(96,165,250,.8)", borderRadius:100, transition:"width .7s ease", minWidth: count > 0 ? 4 : 0 }} />
         </div>
-      ));
+        <span style={{ fontSize:12, fontWeight:800, color:color || "#60a5fa", minWidth:22, textAlign:"right" }}>{count}</span>
+      </div>
+    );
   };
 
-  return (
-    <div style={{ maxWidth:700, margin:"0 auto", padding:"20px 16px 40px" }}>
-      {/* Filtro evento */}
-      {eventos.length > 0 && (
-        <div style={{ marginBottom:20 }}>
-          <FilterSelect value={eventoFiltro} onChange={setEventoFiltro} options={eventos.map(e => e.id)} placeholder="Todos os eventos" />
-        </div>
-      )}
+  const SectionCard = ({ title, icon, children }) => (
+    <div style={{ background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.08)", borderRadius:20, overflow:"hidden", marginBottom:16, backdropFilter:"blur(8px)" }}>
+      <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(255,255,255,.07)", display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ background:"rgba(96,165,250,.15)", borderRadius:10, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{icon}</div>
+        <h3 style={{ margin:0, fontSize:13, fontWeight:700, color:"rgba(255,255,255,.9)", letterSpacing:"0.02em" }}>{title}</h3>
+      </div>
+      <div style={{ padding:"18px 20px" }}>{children}</div>
+    </div>
+  );
 
-      {/* KPI cards */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
-        <StatCard label="Visitantes" value={filteredVis.length} color={BRAND.primary}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
-        <StatCard label="Leads" value={filteredLeads.length} color="#7c3aed"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} />
-        <StatCard label="Leads Quentes" value={tempCount.Quente} color="#b91c1c"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>} />
-        <StatCard label="Leads Mornos" value={tempCount.Morno} color="#b45309"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>} />
+  const Donut = ({ pct, color }) => {
+    const r=24, circ=2*Math.PI*r, dash=(pct/100)*circ;
+    return (
+      <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform:"rotate(-90deg)" }}>
+        <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="7"/>
+        <circle cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="7"
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ filter:`drop-shadow(0 0 6px ${color}88)` }}/>
+      </svg>
+    );
+  };
+
+  const eventoAtual = eventos.find(e => e.id === eventoFiltro);
+  const eventoLabel = eventoAtual ? eventoAtual.nome : "Todos os eventos";
+
+  return (
+    <div style={{ background:"#0a0f2e", minHeight:"100%", padding:"0 0 40px" }}>
+      <style>{`@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}`}</style>
+
+      {/* Topo escuro com filtro */}
+      <div style={{ background:"linear-gradient(135deg,#06038D,#1A2FD6)", padding:"24px 20px 28px", marginBottom:-12 }}>
+        <div style={{ maxWidth:720, margin:"0 auto" }}>
+          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:700, color:"rgba(255,255,255,.5)", letterSpacing:"0.1em", textTransform:"uppercase" }}>Dashboard</p>
+          <h2 style={{ margin:"0 0 16px", fontSize:22, fontWeight:800, color:"#fff" }}>{eventoLabel}</h2>
+          {eventos.length > 0 && (
+            <div style={{ position:"relative" }}>
+              <select value={eventoFiltro} onChange={e => setEventoFiltro(e.target.value)}
+                style={{ width:"100%", height:44, padding:"0 36px 0 14px", border:"1px solid rgba(255,255,255,.25)", borderRadius:12, fontSize:14, color:"#fff", background:"rgba(255,255,255,.12)", outline:"none", appearance:"none", boxSizing:"border-box", fontFamily:"inherit", cursor:"pointer" }}>
+                <option value="todos" style={{ background:"#1A2FD6" }}>📅 Todos os eventos</option>
+                {eventos.map(ev => <option key={ev.id} value={ev.id} style={{ background:"#1A2FD6" }}>{ev.nome}</option>)}
+              </select>
+              <span style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"rgba(255,255,255,.7)" }}>▾</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ maxWidth:720, margin:"0 auto", padding:"20px 16px 0" }}>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20, animation:"fadeup .4s ease" }}>
+        <KpiCard label="Visitantes" value={filteredVis.length} sub="registrados no evento" color="#60a5fa"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
+        <KpiCard label="Total de Leads" value={totalLeads} sub={`${convRate}% taxa de conversão`} color="#a78bfa"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} />
+        <KpiCard label="Leads Quentes" value={tempCount.Quente} sub={`${totalLeads > 0 ? Math.round(tempCount.Quente/totalLeads*100) : 0}% do total`} color="#f87171"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>} />
+        <KpiCard label="Leads Frios" value={tempCount.Frio} sub={`${totalLeads > 0 ? Math.round(tempCount.Frio/totalLeads*100) : 0}% do total`} color="#34d399"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>} />
       </div>
 
-      {/* Temperatura visual */}
-      <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
-        <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"#111827" }}>🌡️ Temperatura dos Leads</h3>
-        <div style={{ display:"flex", gap:10 }}>
-          {Object.entries(TEMP_CONFIG).map(([key, cfg]) => {
+      <SectionCard title="Temperatura dos Leads"
+        icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>}>
+        <div style={{ display:"flex", justifyContent:"space-around", gap:8 }}>
+          {[["Quente","#f87171"],["Morno","#fbbf24"],["Frio","#34d399"]].map(([key,color]) => {
             const count = tempCount[key];
-            const pct = filteredLeads.length ? Math.round((count/filteredLeads.length)*100) : 0;
+            const pct = totalLeads > 0 ? Math.round((count/totalLeads)*100) : 0;
             return (
-              <div key={key} style={{ flex:1, background:cfg.bg, border:`1px solid ${cfg.border}`, borderRadius:14, padding:"16px 12px", textAlign:"center" }}>
-                <p style={{ margin:"0 0 4px", fontSize:24, fontWeight:800, color:cfg.text }}>{count}</p>
-                <p style={{ margin:"0 0 4px", fontSize:12, fontWeight:600, color:cfg.text }}>{cfg.emoji} {key}</p>
-                <p style={{ margin:0, fontSize:11, color:cfg.text, opacity:.7 }}>{pct}%</p>
+              <div key={key} style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, flex:1, background:`${color}10`, borderRadius:16, padding:"16px 8px", border:`1px solid ${color}30` }}>
+                <div style={{ position:"relative", width:64, height:64 }}>
+                  <Donut pct={pct} color={color} />
+                  <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <span style={{ fontSize:13, fontWeight:800, color }}>{pct}%</span>
+                  </div>
+                </div>
+                <p style={{ margin:0, fontSize:26, fontWeight:900, color:"#fff" }}>{count}</p>
+                <p style={{ margin:0, fontSize:11, fontWeight:700, color, letterSpacing:"0.05em" }}>{key.toUpperCase()}</p>
               </div>
             );
           })}
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Segmentos */}
-      <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
-        <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"#111827" }}>🏢 Segmentos mais cadastrados</h3>
-        <BarChart data={topSegmentos} color={BRAND.gradient.includes("135") ? BRAND.primary : BRAND.primary} emptyMsg="Nenhum segmento cadastrado ainda." />
-      </div>
+      <SectionCard title="Segmentos mais cadastrados"
+        icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>}>
+        {topSegmentos.length === 0
+          ? <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, margin:0 }}>Nenhum dado ainda.</p>
+          : topSegmentos.map(([name, count], i) => <HBar key={name} name={name} count={count} max={topSegmentos[0][1]} color={`rgba(26,47,214,${1-i*0.12})`} rank={i} />)
+        }
+      </SectionCard>
 
-      {/* Software */}
-      <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
-        <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"#111827" }}>💻 Software utilizado</h3>
-        <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
-          <div>
-            <p style={{ margin:"0 0 10px", fontSize:13, fontWeight:600, color:"#374151" }}>🚨 Alarme</p>
-            <BarChart data={topAlarme} color="#1A2FD6" emptyMsg="Sem dados" />
-          </div>
-          <div>
-            <p style={{ margin:"0 0 10px", fontSize:13, fontWeight:600, color:"#374151" }}>🏠 Portaria</p>
-            <BarChart data={topPortaria} color="#7c3aed" emptyMsg="Sem dados" />
-          </div>
-          <div>
-            <p style={{ margin:"0 0 10px", fontSize:13, fontWeight:600, color:"#374151" }}>🚨🏠 Alarme + Portaria</p>
-            <BarChart data={topAmbos} color="#059669" emptyMsg="Sem dados" />
-          </div>
+      <SectionCard title="Software utilizado"
+        icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>}>
+        <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+          {[["🚨 Alarme", topAlarme, "#1A2FD6"],["🏠 Portaria Remota", topPortaria, "#7c3aed"],["🚨🏠 Alarme + Portaria", topAmbos, "#059669"]].map(([label, data, color]) => (
+            <div key={label}>
+              <p style={{ margin:"0 0 10px", fontSize:11, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:"0.07em" }}>{label}</p>
+              {data.length === 0
+                ? <p style={{ margin:0, fontSize:12, color:"rgba(255,255,255,.3)" }}>Sem dados suficientes</p>
+                : data.map(([name, count], i) => <HBar key={name} name={name} count={count} max={data[0][1]} color={color} rank={i} />)
+              }
+            </div>
+          ))}
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Leads por vendedor */}
-      <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"20px", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
-        <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"#111827" }}>👥 Leads por vendedor</h3>
-        {topVendedores.length === 0 ? <p style={{ color:"#9ca3af", fontSize:13, margin:0 }}>Nenhum dado ainda.</p> :
-          topVendedores.map(([nome, count], idx) => (
-            <div key={nome} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-              <div style={{ width:28, height:28, borderRadius:"50%", background:idx===0 ? BRAND.gradient : "#f3f4f6", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:idx===0 ? "#fff" : "#6b7280" }}>{idx+1}</span>
+      <SectionCard title="Ranking de Vendedores"
+        icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}>
+        {topVendedores.length === 0
+          ? <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, margin:0 }}>Nenhum lead cadastrado ainda.</p>
+          : topVendedores.map(([nome, count], idx) => (
+            <div key={nome} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, padding:"10px 12px", background: idx===0 ? "rgba(96,165,250,.1)" : "rgba(255,255,255,.03)", borderRadius:12, border: `1px solid ${idx===0 ? "rgba(96,165,250,.25)" : "rgba(255,255,255,.05)"}` }}>
+              <div style={{ width:28, height:28, borderRadius:"50%", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                background: idx===0 ? "linear-gradient(135deg,#f59e0b,#d97706)" : idx===1 ? "linear-gradient(135deg,#94a3b8,#64748b)" : idx===2 ? "linear-gradient(135deg,#b45309,#92400e)" : "rgba(255,255,255,.08)",
+                boxShadow: idx<3 ? `0 2px 10px ${["#f59e0b","#94a3b8","#b45309"][idx]}66` : "none" }}>
+                <span style={{ fontSize:11, fontWeight:800, color: idx<3 ? "#fff" : "rgba(255,255,255,.4)" }}>{idx+1}</span>
               </div>
-              <span style={{ fontSize:13, color:"#374151", fontWeight:500, minWidth:80, flexShrink:0 }}>{nome}</span>
-              <div style={{ flex:1, background:"#f3f4f6", borderRadius:8, height:22, overflow:"hidden" }}>
-                <div style={{ width:`${(count/maxVend)*100}%`, height:"100%", background: idx===0 ? BRAND.gradient : `rgba(26,47,214,${0.4 - idx*0.05})`, borderRadius:8, minWidth:4 }} />
+              <span style={{ fontSize:13, fontWeight: idx===0 ? 700 : 500, color: idx===0 ? "#fff" : "rgba(255,255,255,.75)", flex:1 }}>{nome}</span>
+              <div style={{ flex:2, background:"rgba(255,255,255,.07)", borderRadius:100, height:14, overflow:"hidden" }}>
+                <div style={{ width:`${(count/maxVend)*100}%`, height:"100%", background: idx===0 ? "linear-gradient(90deg,#60a5fa,#a78bfa)" : `rgba(96,165,250,${Math.max(0.2,0.6-idx*0.06)})`, borderRadius:100, minWidth:count>0?4:0, transition:"width .7s ease" }} />
               </div>
-              <span style={{ fontSize:13, fontWeight:700, color:BRAND.primary, minWidth:24, textAlign:"right" }}>{count}</span>
+              <div style={{ background: idx===0 ? "rgba(96,165,250,.25)" : "rgba(255,255,255,.06)", borderRadius:8, padding:"4px 10px", flexShrink:0, minWidth:32, textAlign:"center" }}>
+                <span style={{ fontSize:13, fontWeight:800, color: idx===0 ? "#60a5fa" : "rgba(255,255,255,.5)" }}>{count}</span>
+              </div>
             </div>
           ))
         }
+      </SectionCard>
       </div>
     </div>
   );
@@ -1220,7 +1285,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#FAFAFA", fontFamily:"'Instrument Sans', sans-serif" }}>
-      {screen === "home" && <HomeScreen onNav={setScreen} visitors={visDoEvento} leads={leadsDoEvento} usuario={usuario} eventos={eventos} eventoSelecionado={eventoSelecionado} setEventoSelecionado={setEventoSelecionado} />}
+      {screen === "home" && <HomeScreen onNav={setScreen} onLogout={() => { setUsuario(null); setScreen("home"); setVisitors([]); setLeads([]); setEventos([]); setUsuarios([]); setEventoSelecionado(null); }} visitors={visDoEvento} leads={leadsDoEvento} usuario={usuario} eventos={eventos} eventoSelecionado={eventoSelecionado} setEventoSelecionado={setEventoSelecionado} />}
       {screen === "perfil" && <PerfilScreen onBack={() => setScreen("home")} usuario={usuario} onUpdate={u => { setUsuario(u); setScreen("home"); }} />}
       {screen === "visitante" && <VisitanteScreen onBack={() => setScreen("home")} onSave={saveVisitor} usuario={usuario} />}
       {screen === "lead" && <LeadScreen onBack={() => setScreen("home")} onSave={saveLead} usuario={usuario} />}
