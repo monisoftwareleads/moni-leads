@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
 
 const BRAND = {
@@ -389,9 +389,13 @@ const HomeScreen = ({ onNav, visitors, leads, euSou, setEuSou }) => (
 // SCREEN 2 – Registrar Visitante
 // ══════════════════════════════════════════════════════════════════════════════
 const VisitanteScreen = ({ onBack, onSave, defaultAtendente = "" }) => {
-  const empty = { nome: "", empresa: "", whatsapp: "", atendente: defaultAtendente, obs: "" };
+  const empty = { nome: "", empresa: "", cargo: "", whatsapp: "", atendente: defaultAtendente, obs: "" };
   const [f, setF] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanPreview, setScanPreview] = useState(null);
+  const [scanStatus, setScanStatus] = useState(""); // "loading" | "success" | "error"
+  const fileInputRef = useRef(null);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const save = async (reset) => {
@@ -400,33 +404,179 @@ const VisitanteScreen = ({ onBack, onSave, defaultAtendente = "" }) => {
     await new Promise(r => setTimeout(r, 600));
     onSave(f, reset);
     setSaving(false);
-    if (reset) setF(empty);
+    if (reset) { setF(empty); setScanPreview(null); setScanStatus(""); }
+  };
+
+  // ── Leitura da credencial via Claude API ──────────────────────────────────
+  const handleScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview da imagem
+    const reader = new FileReader();
+    reader.onload = (ev) => setScanPreview(ev.target.result);
+    reader.readAsDataURL(file);
+
+    setScanning(true);
+    setScanStatus("loading");
+
+    try {
+      // Converter para base64
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+
+      const mediaType = file.type || "image/jpeg";
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 300,
+          messages: [{
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: { type: "base64", media_type: mediaType, data: base64 }
+              },
+              {
+                type: "text",
+                text: `Você é um leitor de credenciais de eventos. Analise esta imagem de crachá/credencial e extraia APENAS as informações visíveis.
+Responda SOMENTE com JSON válido, sem texto adicional, sem markdown, sem explicações:
+{"nome": "nome completo da pessoa ou vazio", "empresa": "nome da empresa ou vazio", "cargo": "cargo ou função ou vazio"}
+Se não conseguir ler algum campo, deixe como string vazia "".`
+              }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content?.[0]?.text || "";
+
+      // Parse JSON da resposta
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+
+      setF(prev => ({
+        ...prev,
+        nome: parsed.nome || prev.nome,
+        empresa: parsed.empresa || prev.empresa,
+        cargo: parsed.cargo || prev.cargo,
+      }));
+
+      setScanStatus("success");
+    } catch (err) {
+      console.error("Erro ao escanear:", err);
+      setScanStatus("error");
+    } finally {
+      setScanning(false);
+      // Limpar input para permitir escanear novamente
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   return (
     <div style={{ minHeight: "100vh", background: BRAND.bg, paddingBottom: 40 }}>
       <BackBtn onClick={onBack} label="Registrar Visitante" />
       <div style={{ maxWidth: 512, margin: "0 auto", padding: "24px 16px 0", display: "flex", flexDirection: "column", gap: 20 }}>
-        {/* Nome */}
+
+        {/* ── Bloco Escanear Credencial ── */}
+        <div style={{
+          background: "#fff", border: `2px dashed ${scanStatus === "success" ? "#86efac" : BRAND.primary}`,
+          borderRadius: 16, padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14,
+          transition: "border-color .3s",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ background: "rgba(26,47,214,.08)", borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#111827" }}>Escanear Credencial</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b7280", marginTop: 1 }}>Tire uma foto do crachá para preencher automaticamente</p>
+            </div>
+          </div>
+
+          {/* Preview da imagem */}
+          {scanPreview && (
+            <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", maxHeight: 180 }}>
+              <img src={scanPreview} alt="Credencial" style={{ width: "100%", objectFit: "cover", borderRadius: 10, display: "block" }} />
+              {scanning && (
+                <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,.8)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTop: `3px solid ${BRAND.primary}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                  <p style={{ margin: 0, fontSize: 13, color: BRAND.primary, fontWeight: 600 }}>Lendo credencial...</p>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Status */}
+          {scanStatus === "success" && !scanning && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "10px 14px" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <p style={{ margin: 0, fontSize: 13, color: "#16a34a", fontWeight: 600 }}>Credencial lida com sucesso! Confira os campos abaixo.</p>
+            </div>
+          )}
+          {scanStatus === "error" && !scanning && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 14px" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p style={{ margin: 0, fontSize: 13, color: "#dc2626", fontWeight: 600 }}>Não foi possível ler. Preencha manualmente.</p>
+            </div>
+          )}
+
+          {/* Botão câmera */}
+          <input ref={fileInputRef} type="file" accept="image/*" capture="environment"
+            onChange={handleScan} style={{ display: "none" }} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={scanning}
+            style={{
+              height: 46, borderRadius: 12, border: `1.5px solid ${BRAND.primary}`,
+              background: scanning ? "#f9fafb" : "rgba(26,47,214,.06)",
+              color: scanning ? "#9ca3af" : BRAND.primary,
+              fontWeight: 600, fontSize: 14, cursor: scanning ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              transition: "all .15s", fontFamily: "inherit",
+            }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+            {scanning ? "Processando..." : scanPreview ? "Escanear novamente" : "Abrir câmera"}
+          </button>
+        </div>
+
+        {/* ── Campos do formulário ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Nome <span style={{ color: "#ef4444" }}>*</span></label>
           <input value={f.nome} onChange={set("nome")} placeholder="Nome completo"
             style={fieldStyle} onFocus={focusStyle} onBlur={blurStyle} />
         </div>
-        {/* Empresa */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Empresa</label>
           <input value={f.empresa} onChange={set("empresa")} placeholder="Nome da empresa"
             style={fieldStyle} onFocus={focusStyle} onBlur={blurStyle} />
         </div>
-        {/* WhatsApp */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Cargo</label>
+          <input value={f.cargo} onChange={set("cargo")} placeholder="Cargo ou função"
+            style={fieldStyle} onFocus={focusStyle} onBlur={blurStyle} />
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>WhatsApp</label>
           <input value={f.whatsapp} onChange={(e) => setF(p => ({ ...p, whatsapp: formatPhone(e.target.value) }))}
             placeholder="(00) 00000-0000" type="tel"
             style={fieldStyle} onFocus={focusStyle} onBlur={blurStyle} />
         </div>
-        {/* Quem atendeu */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Quem atendeu</label>
           <div style={{ position: "relative" }}>
@@ -438,13 +588,13 @@ const VisitanteScreen = ({ onBack, onSave, defaultAtendente = "" }) => {
             <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#6b7280" }}>▾</span>
           </div>
         </div>
-        {/* Observação */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Observação</label>
           <textarea value={f.obs} onChange={set("obs")} placeholder="Anotações sobre a visita..."
             rows={4} style={{ ...fieldStyle, minHeight: 100, resize: "none", fontFamily: "inherit" }}
             onFocus={focusStyle} onBlur={blurStyle} />
         </div>
+
         {/* Actions */}
         <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 12 }}>
           <button onClick={() => save(false)} disabled={saving}
@@ -453,7 +603,6 @@ const VisitanteScreen = ({ onBack, onSave, defaultAtendente = "" }) => {
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               opacity: saving ? 0.7 : 1, transition: "all .15s", fontFamily: "inherit",
               boxShadow: `0 4px 14px rgba(26,47,214,.25)` }}>
-            {/* CheckCircle */}
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
