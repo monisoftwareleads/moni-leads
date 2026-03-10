@@ -349,7 +349,9 @@ const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, evento
       <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
         {/* Esquerda: Logo + Admin */}
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <Logo size={48} />
+          <button onClick={() => onNav("home")} style={{ background:"none", border:"none", cursor:"pointer", padding:0, lineHeight:0, display:"flex", alignItems:"center" }}>
+            <Logo size={48} />
+          </button>
           {usuario.isAdmin && (
             <>
               <div style={{ width:1, height:28, background:"#e5e7eb" }} />
@@ -419,15 +421,23 @@ const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, evento
           )}
         </div>
 
-        {/* Contadores */}
+        {/* Cards clicáveis: Visitantes e Leads */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
+          <div onClick={() => onNav("lista-visitantes")}
+            style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)", cursor:"pointer", transition:"all .2s" }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.1)"; e.currentTarget.style.borderColor="rgba(26,47,214,.3)"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor="#e5e7eb"; }}>
             <p style={{ margin:"0 0 4px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{visCount}</p>
-            <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>Visitantes</p>
+            <p style={{ margin:"0 0 8px", fontSize:12, color:"#6b7280" }}>Visitantes</p>
+            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista →</span>
           </div>
-          <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
+          <div onClick={() => onNav("lista-leads")}
+            style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)", cursor:"pointer", transition:"all .2s" }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.1)"; e.currentTarget.style.borderColor="rgba(26,47,214,.3)"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor="#e5e7eb"; }}>
             <p style={{ margin:"0 0 4px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{leadCount}</p>
-            <p style={{ margin:0, fontSize:12, color:"#6b7280" }}>Leads</p>
+            <p style={{ margin:"0 0 8px", fontSize:12, color:"#6b7280" }}>Leads</p>
+            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista →</span>
           </div>
         </div>
 
@@ -463,20 +473,7 @@ const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, evento
           <svg width="20" height="20" viewBox="0 0 20 20" fill="rgba(255,255,255,.5)"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd"/></svg>
         </div>
 
-        {/* Links */}
-        <div style={{ display:"flex", gap:12, alignItems:"center", justifyContent:"center", paddingTop:8 }}>
-          <button onClick={() => onNav("lista-visitantes")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:13, color:"#6b7280", textDecoration:"underline", textUnderlineOffset:4, fontFamily:"inherit" }}>
-            Visitantes ({visCount})
-          </button>
-          <span style={{ color:"#d1d5db" }}>·</span>
-          <button onClick={() => onNav("lista-leads")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:13, color:"#6b7280", textDecoration:"underline", textUnderlineOffset:4, fontFamily:"inherit" }}>
-            Leads ({leadCount})
-          </button>
-          <span style={{ color:"#d1d5db" }}>·</span>
-          <button onClick={() => onNav("perfil")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:13, color:"#6b7280", textDecoration:"underline", textUnderlineOffset:4, fontFamily:"inherit" }}>
-            Meu perfil
-          </button>
-        </div>
+
       </div>
     </div>
   );
