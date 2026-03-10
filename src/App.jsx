@@ -415,9 +415,24 @@ const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, evento
             </div>
           )}
           {eventoAtual && (
-            <p style={{ margin:"8px 0 0", fontSize:12, color:"#6b7280" }}>
-              {eventoAtual.data && `📅 ${eventoAtual.data}`}{eventoAtual.local && ` · 📍 ${eventoAtual.local}`}
-            </p>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:"6px 14px", marginTop:8 }}>
+              {eventoAtual.data && (
+                <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span style={{ fontSize:12, color:"#6b7280" }}>{eventoAtual.data}</span>
+                </div>
+              )}
+              {eventoAtual.local && (
+                <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <span style={{ fontSize:12, color:"#6b7280" }}>{eventoAtual.local}</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -427,17 +442,19 @@ const HomeScreen = ({ onNav, onLogout, visitors, leads, usuario, eventos, evento
             style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)", cursor:"pointer", transition:"all .2s" }}
             onMouseEnter={e => { e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.1)"; e.currentTarget.style.borderColor="rgba(26,47,214,.3)"; }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor="#e5e7eb"; }}>
-            <p style={{ margin:"0 0 4px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{visCount}</p>
-            <p style={{ margin:"0 0 8px", fontSize:12, color:"#6b7280" }}>Visitantes</p>
-            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista →</span>
+            <p style={{ margin:"0 0 2px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{visCount}</p>
+            <p style={{ margin:"0 0 2px", fontSize:12, color:"#6b7280" }}>Visitantes</p>
+            <p style={{ margin:"0 0 8px", fontSize:10, color:"#9ca3af" }}>no evento</p>
+            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista</span>
           </div>
           <div onClick={() => onNav("lista-leads")}
             style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:16, padding:"16px", textAlign:"center", boxShadow:"0 1px 4px rgba(0,0,0,.05)", cursor:"pointer", transition:"all .2s" }}
             onMouseEnter={e => { e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.1)"; e.currentTarget.style.borderColor="rgba(26,47,214,.3)"; }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor="#e5e7eb"; }}>
-            <p style={{ margin:"0 0 4px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{leadCount}</p>
-            <p style={{ margin:"0 0 8px", fontSize:12, color:"#6b7280" }}>Leads</p>
-            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista →</span>
+            <p style={{ margin:"0 0 2px", fontSize:28, fontWeight:800, color:BRAND.primary }}>{leadCount}</p>
+            <p style={{ margin:"0 0 2px", fontSize:12, color:"#6b7280" }}>Leads</p>
+            <p style={{ margin:"0 0 8px", fontSize:10, color:"#9ca3af" }}>no evento</p>
+            <span style={{ fontSize:11, fontWeight:600, color:BRAND.primary, background:"rgba(26,47,214,.08)", padding:"3px 10px", borderRadius:20 }}>Ver lista</span>
           </div>
         </div>
 
@@ -955,14 +972,14 @@ const Dashboard = ({ leads, visitors, eventos }) => {
   const convRate = (filteredVis.length + totalLeads) > 0 ? Math.round((totalLeads / (filteredVis.length + totalLeads)) * 100) : 0;
 
   const KpiCard = ({ label, value, sub, color, icon }) => (
-    <div style={{ background:"rgba(255,255,255,.05)", borderRadius:18, padding:"18px 20px", border:"1px solid rgba(255,255,255,.08)", display:"flex", flexDirection:"column", gap:6, position:"relative", overflow:"hidden", backdropFilter:"blur(10px)" }}>
-      <div style={{ position:"absolute", top:-20, right:-20, width:90, height:90, borderRadius:"50%", background:`${color || BRAND.primary}18` }} />
+    <div style={{ background:"#fff", borderRadius:18, padding:"18px 20px", border:"1px solid #e5e7eb", display:"flex", flexDirection:"column", gap:6, position:"relative", overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
+      <div style={{ position:"absolute", top:-20, right:-20, width:90, height:90, borderRadius:"50%", background:`${color || BRAND.primary}12` }} />
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>
-        <div style={{ background:`${color || BRAND.primary}22`, borderRadius:10, padding:7 }}>{icon}</div>
+        <span style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>
+        <div style={{ background:`${color || BRAND.primary}15`, borderRadius:10, padding:7 }}>{icon}</div>
       </div>
-      <p style={{ margin:0, fontSize:36, fontWeight:900, color: color || "#60a5fa", lineHeight:1 }}>{value}</p>
-      {sub && <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,.4)" }}>{sub}</p>}
+      <p style={{ margin:0, fontSize:36, fontWeight:900, color: color || BRAND.primary, lineHeight:1 }}>{value}</p>
+      {sub && <p style={{ margin:0, fontSize:11, color:"#9ca3af" }}>{sub}</p>}
     </div>
   );
 
@@ -972,24 +989,24 @@ const Dashboard = ({ leads, visitors, eventos }) => {
     return (
       <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:9 }}>
         {rank !== undefined && (
-          <div style={{ width:22, height:22, borderRadius:"50%", background: rank < 3 ? medalColors[rank] : "rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, flexShrink:0 }}>
-            <span style={{ fontSize:10, fontWeight:800, color: rank < 3 ? "#fff" : "rgba(255,255,255,.4)" }}>{rank+1}</span>
+          <div style={{ width:22, height:22, borderRadius:"50%", background: rank < 3 ? medalColors[rank] : "#f3f4f6", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <span style={{ fontSize:10, fontWeight:800, color: rank < 3 ? "#fff" : "#9ca3af" }}>{rank+1}</span>
           </div>
         )}
-        <span style={{ fontSize:12, color:"rgba(255,255,255,.75)", fontWeight:500, width:90, flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{name}</span>
-        <div style={{ flex:1, background:"rgba(255,255,255,.07)", borderRadius:100, height:14, overflow:"hidden" }}>
-          <div style={{ width:`${pct}%`, height:"100%", background: color || "rgba(96,165,250,.8)", borderRadius:100, transition:"width .7s ease", minWidth: count > 0 ? 4 : 0 }} />
+        <span style={{ fontSize:12, color:"#374151", fontWeight:500, width:90, flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{name}</span>
+        <div style={{ flex:1, background:"#f3f4f6", borderRadius:100, height:14, overflow:"hidden" }}>
+          <div style={{ width:`${pct}%`, height:"100%", background: color || BRAND.primary, borderRadius:100, transition:"width .7s ease", minWidth: count > 0 ? 4 : 0 }} />
         </div>
-        <span style={{ fontSize:12, fontWeight:800, color:color || "#60a5fa", minWidth:22, textAlign:"right" }}>{count}</span>
+        <span style={{ fontSize:12, fontWeight:800, color:color || BRAND.primary, minWidth:22, textAlign:"right" }}>{count}</span>
       </div>
     );
   };
 
   const SectionCard = ({ title, icon, children }) => (
-    <div style={{ background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.08)", borderRadius:20, overflow:"hidden", marginBottom:16, backdropFilter:"blur(8px)" }}>
-      <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(255,255,255,.07)", display:"flex", alignItems:"center", gap:10 }}>
-        <div style={{ background:"rgba(96,165,250,.15)", borderRadius:10, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{icon}</div>
-        <h3 style={{ margin:0, fontSize:13, fontWeight:700, color:"rgba(255,255,255,.9)", letterSpacing:"0.02em" }}>{title}</h3>
+    <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:20, overflow:"hidden", marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
+      <div style={{ padding:"14px 20px", borderBottom:"1px solid #f3f4f6", display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ background:"rgba(26,47,214,.08)", borderRadius:10, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{icon}</div>
+        <h3 style={{ margin:0, fontSize:13, fontWeight:700, color:"#111827", letterSpacing:"0.02em" }}>{title}</h3>
       </div>
       <div style={{ padding:"18px 20px" }}>{children}</div>
     </div>
@@ -999,9 +1016,9 @@ const Dashboard = ({ leads, visitors, eventos }) => {
     const r=24, circ=2*Math.PI*r, dash=(pct/100)*circ;
     return (
       <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform:"rotate(-90deg)" }}>
-        <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="7"/>
+        <circle cx="32" cy="32" r={r} fill="none" stroke="#f3f4f6" strokeWidth="7"/>
         <circle cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="7"
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ filter:`drop-shadow(0 0 6px ${color}88)` }}/>
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"/>
       </svg>
     );
   };
@@ -1010,22 +1027,22 @@ const Dashboard = ({ leads, visitors, eventos }) => {
   const eventoLabel = eventoAtual ? eventoAtual.nome : "Todos os eventos";
 
   return (
-    <div style={{ background:"#0a0f2e", minHeight:"100%", padding:"0 0 40px" }}>
-      <style>{`@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}`}</style>
+    <div style={{ background:BRAND.bg, minHeight:"100%", padding:"0 0 40px" }}>
+      <style>{`@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      {/* Topo escuro com filtro */}
-      <div style={{ background:"linear-gradient(135deg,#06038D,#1A2FD6)", padding:"24px 20px 28px", marginBottom:-12 }}>
+      {/* Header com filtro */}
+      <div style={{ background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"20px 20px 20px" }}>
         <div style={{ maxWidth:720, margin:"0 auto" }}>
-          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:700, color:"rgba(255,255,255,.5)", letterSpacing:"0.1em", textTransform:"uppercase" }}>Dashboard</p>
-          <h2 style={{ margin:"0 0 16px", fontSize:22, fontWeight:800, color:"#fff" }}>{eventoLabel}</h2>
+          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:700, color:"#9ca3af", letterSpacing:"0.1em", textTransform:"uppercase" }}>Dashboard</p>
+          <h2 style={{ margin:"0 0 16px", fontSize:22, fontWeight:800, color:"#111827" }}>{eventoLabel}</h2>
           {eventos.length > 0 && (
             <div style={{ position:"relative" }}>
               <select value={eventoFiltro} onChange={e => setEventoFiltro(e.target.value)}
-                style={{ width:"100%", height:44, padding:"0 36px 0 14px", border:"1px solid rgba(255,255,255,.25)", borderRadius:12, fontSize:14, color:"#fff", background:"rgba(255,255,255,.12)", outline:"none", appearance:"none", boxSizing:"border-box", fontFamily:"inherit", cursor:"pointer" }}>
-                <option value="todos" style={{ background:"#1A2FD6" }}>📅 Todos os eventos</option>
-                {eventos.map(ev => <option key={ev.id} value={ev.id} style={{ background:"#1A2FD6" }}>{ev.nome}</option>)}
+                style={{ ...fieldStyle, appearance:"none", paddingRight:36, fontWeight:600 }}>
+                <option value="todos">Todos os eventos</option>
+                {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nome}</option>)}
               </select>
-              <span style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"rgba(255,255,255,.7)" }}>▾</span>
+              <span style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"#6b7280" }}>▾</span>
             </div>
           )}
         </div>
@@ -1033,14 +1050,14 @@ const Dashboard = ({ leads, visitors, eventos }) => {
       <div style={{ maxWidth:720, margin:"0 auto", padding:"20px 16px 0" }}>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20, animation:"fadeup .4s ease" }}>
-        <KpiCard label="Visitantes" value={filteredVis.length} sub="registrados no evento" color="#60a5fa"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
-        <KpiCard label="Total de Leads" value={totalLeads} sub={`${convRate}% taxa de conversão`} color="#a78bfa"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} />
-        <KpiCard label="Leads Quentes" value={tempCount.Quente} sub={`${totalLeads > 0 ? Math.round(tempCount.Quente/totalLeads*100) : 0}% do total`} color="#f87171"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>} />
-        <KpiCard label="Leads Frios" value={tempCount.Frio} sub={`${totalLeads > 0 ? Math.round(tempCount.Frio/totalLeads*100) : 0}% do total`} color="#34d399"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>} />
+        <KpiCard label="Visitantes" value={filteredVis.length} sub="registrados no evento" color={BRAND.primary}
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
+        <KpiCard label="Total de Leads" value={totalLeads} sub={`${convRate}% taxa de conversão`} color="#7c3aed"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} />
+        <KpiCard label="Leads Quentes" value={tempCount.Quente} sub={`${totalLeads > 0 ? Math.round(tempCount.Quente/totalLeads*100) : 0}% do total`} color="#ef4444"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>} />
+        <KpiCard label="Leads Frios" value={tempCount.Frio} sub={`${totalLeads > 0 ? Math.round(tempCount.Frio/totalLeads*100) : 0}% do total`} color="#0ea5e9"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>} />
       </div>
 
       <SectionCard title="Temperatura dos Leads"
@@ -1050,14 +1067,14 @@ const Dashboard = ({ leads, visitors, eventos }) => {
             const count = tempCount[key];
             const pct = totalLeads > 0 ? Math.round((count/totalLeads)*100) : 0;
             return (
-              <div key={key} style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, flex:1, background:`${color}10`, borderRadius:16, padding:"16px 8px", border:`1px solid ${color}30` }}>
+              <div key={key} style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, flex:1, background:`${color}08`, borderRadius:16, padding:"16px 8px", border:`1px solid ${color}25` }}>
                 <div style={{ position:"relative", width:64, height:64 }}>
                   <Donut pct={pct} color={color} />
                   <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <span style={{ fontSize:13, fontWeight:800, color }}>{pct}%</span>
                   </div>
                 </div>
-                <p style={{ margin:0, fontSize:26, fontWeight:900, color:"#fff" }}>{count}</p>
+                <p style={{ margin:0, fontSize:26, fontWeight:900, color:"#111827" }}>{count}</p>
                 <p style={{ margin:0, fontSize:11, fontWeight:700, color, letterSpacing:"0.05em" }}>{key.toUpperCase()}</p>
               </div>
             );
@@ -1068,7 +1085,7 @@ const Dashboard = ({ leads, visitors, eventos }) => {
       <SectionCard title="Segmentos mais cadastrados"
         icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={BRAND.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>}>
         {topSegmentos.length === 0
-          ? <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, margin:0 }}>Nenhum dado ainda.</p>
+          ? <p style={{ color:"#9ca3af", fontSize:13, margin:0 }}>Nenhum dado ainda.</p>
           : topSegmentos.map(([name, count], i) => <HBar key={name} name={name} count={count} max={topSegmentos[0][1]} color={`rgba(26,47,214,${1-i*0.12})`} rank={i} />)
         }
       </SectionCard>
@@ -1078,9 +1095,9 @@ const Dashboard = ({ leads, visitors, eventos }) => {
         <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
           {[["🚨 Alarme", topAlarme, "#1A2FD6"],["🏠 Portaria Remota", topPortaria, "#7c3aed"],["🚨🏠 Alarme + Portaria", topAmbos, "#059669"]].map(([label, data, color]) => (
             <div key={label}>
-              <p style={{ margin:"0 0 10px", fontSize:11, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:"0.07em" }}>{label}</p>
+              <p style={{ margin:"0 0 10px", fontSize:11, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:"0.07em" }}>{label}</p>
               {data.length === 0
-                ? <p style={{ margin:0, fontSize:12, color:"rgba(255,255,255,.3)" }}>Sem dados suficientes</p>
+                ? <p style={{ margin:0, fontSize:12, color:"#d1d5db" }}>Sem dados suficientes</p>
                 : data.map(([name, count], i) => <HBar key={name} name={name} count={count} max={data[0][1]} color={color} rank={i} />)
               }
             </div>
@@ -1091,20 +1108,20 @@ const Dashboard = ({ leads, visitors, eventos }) => {
       <SectionCard title="Ranking de Vendedores"
         icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}>
         {topVendedores.length === 0
-          ? <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, margin:0 }}>Nenhum lead cadastrado ainda.</p>
+          ? <p style={{ color:"#9ca3af", fontSize:13, margin:0 }}>Nenhum lead cadastrado ainda.</p>
           : topVendedores.map(([nome, count], idx) => (
-            <div key={nome} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, padding:"10px 12px", background: idx===0 ? "rgba(96,165,250,.1)" : "rgba(255,255,255,.03)", borderRadius:12, border: `1px solid ${idx===0 ? "rgba(96,165,250,.25)" : "rgba(255,255,255,.05)"}` }}>
+            <div key={nome} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, padding:"10px 12px", background: idx===0 ? "rgba(26,47,214,.05)" : "#f9fafb", borderRadius:12, border: `1px solid ${idx===0 ? "rgba(26,47,214,.2)" : "#f3f4f6"}` }}>
               <div style={{ width:28, height:28, borderRadius:"50%", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                background: idx===0 ? "linear-gradient(135deg,#f59e0b,#d97706)" : idx===1 ? "linear-gradient(135deg,#94a3b8,#64748b)" : idx===2 ? "linear-gradient(135deg,#b45309,#92400e)" : "rgba(255,255,255,.08)",
-                boxShadow: idx<3 ? `0 2px 10px ${["#f59e0b","#94a3b8","#b45309"][idx]}66` : "none" }}>
-                <span style={{ fontSize:11, fontWeight:800, color: idx<3 ? "#fff" : "rgba(255,255,255,.4)" }}>{idx+1}</span>
+                background: idx===0 ? "linear-gradient(135deg,#f59e0b,#d97706)" : idx===1 ? "linear-gradient(135deg,#94a3b8,#64748b)" : idx===2 ? "linear-gradient(135deg,#b45309,#92400e)" : "#e5e7eb",
+                boxShadow: idx<3 ? `0 2px 8px ${["#f59e0b","#94a3b8","#b45309"][idx]}55` : "none" }}>
+                <span style={{ fontSize:11, fontWeight:800, color: idx<3 ? "#fff" : "#9ca3af" }}>{idx+1}</span>
               </div>
-              <span style={{ fontSize:13, fontWeight: idx===0 ? 700 : 500, color: idx===0 ? "#fff" : "rgba(255,255,255,.75)", flex:1 }}>{nome}</span>
-              <div style={{ flex:2, background:"rgba(255,255,255,.07)", borderRadius:100, height:14, overflow:"hidden" }}>
-                <div style={{ width:`${(count/maxVend)*100}%`, height:"100%", background: idx===0 ? "linear-gradient(90deg,#60a5fa,#a78bfa)" : `rgba(96,165,250,${Math.max(0.2,0.6-idx*0.06)})`, borderRadius:100, minWidth:count>0?4:0, transition:"width .7s ease" }} />
+              <span style={{ fontSize:13, fontWeight: idx===0 ? 700 : 500, color: idx===0 ? "#111827" : "#374151", flex:1 }}>{nome}</span>
+              <div style={{ flex:2, background:"#e5e7eb", borderRadius:100, height:14, overflow:"hidden" }}>
+                <div style={{ width:`${(count/maxVend)*100}%`, height:"100%", background: idx===0 ? BRAND.gradient : `rgba(26,47,214,${Math.max(0.2,0.6-idx*0.06)})`, borderRadius:100, minWidth:count>0?4:0, transition:"width .7s ease" }} />
               </div>
-              <div style={{ background: idx===0 ? "rgba(96,165,250,.25)" : "rgba(255,255,255,.06)", borderRadius:8, padding:"4px 10px", flexShrink:0, minWidth:32, textAlign:"center" }}>
-                <span style={{ fontSize:13, fontWeight:800, color: idx===0 ? "#60a5fa" : "rgba(255,255,255,.5)" }}>{count}</span>
+              <div style={{ background: idx===0 ? "rgba(26,47,214,.1)" : "#f3f4f6", borderRadius:8, padding:"4px 10px", flexShrink:0, minWidth:32, textAlign:"center" }}>
+                <span style={{ fontSize:13, fontWeight:800, color: idx===0 ? BRAND.primary : "#6b7280" }}>{count}</span>
               </div>
             </div>
           ))
